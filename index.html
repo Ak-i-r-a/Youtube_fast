@@ -1,0 +1,202 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Playlist</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #f0f0f0;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ff0000;
+        }
+
+        #playlist-input {
+            width: calc(100% - 20px); 
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: vertical; 
+            background-color: #f9f9f9;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #ff0000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #cc0000;
+        }
+
+        #video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        #video-player {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #playlist-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #playlist-container a {
+            display: inline-block;
+            margin: 5px;
+            padding: 5px 10px;
+            background-color: #f0f0f0;
+            color: #333;
+            text-decoration: none;
+            border-radius: 3px;
+            transition: background-color 0.3s;
+        }
+
+        #playlist-container a:hover {
+            background-color: #ddd;
+        }
+
+        body.dark-mode #playlist-input {
+            background-color: #333; 
+            color: #f0f0f0; 
+            border-color: #555; 
+        }
+
+        body.dark-mode #playlist-container a {
+            background-color: #444; 
+            color: #f0f0f0; 
+        }
+
+        body.dark-mode #playlist-container a:hover {
+            background-color: #555; 
+        }
+    </style>
+</head>
+<body class="dark-mode">
+    <div class="container">
+        <h1>YouTube Playlist</h1>
+        <form>
+           <textarea id="playlist-input" rows="5" placeholder="Paste your YouTube links here, one per line"></textarea>
+           <button type="submit">Create Playlist</button>
+       </form>
+       <div id="video-container">
+           <iframe id="video-player" src="" frameborder="0" allowfullscreen></iframe>
+       </div>
+       <div id="playlist-container"></div>
+   </div>
+
+   <script>
+       function extractVideoId(url) {
+           var videoId = "";
+
+           if (url.includes("youtube.com")) {
+               if (url.includes("list=")) {
+                   var listParam = url.split("list=")[1];
+                   videoId = "PLAYLIST:" + listParam;
+               } else {
+                   videoId = url.split("v=")[1];
+                   var ampersandPosition = videoId.indexOf("&");
+                   if (ampersandPosition != -1) {
+                       videoId = videoId.substring(0, ampersandPosition);
+                   }
+               }
+           } else if (url.includes("youtu.be")) {
+               videoId = url.split("/").pop();
+           }
+
+           return videoId;
+       }
+
+       document.querySelector('form').addEventListener('submit', function(e) {
+           e.preventDefault();
+           var playlistInput = document.getElementById('playlist-input').value.trim();
+           var urls = playlistInput.split("\n");
+
+           var videoIds = [];
+           var playlistLinks = [];
+
+           for (var i = 0; i < urls.length; i++) {
+               var url = urls[i].trim();
+               if (url != "") {
+                   var videoId = extractVideoId(url);
+                   videoIds.push(videoId);
+
+                   var link = document.createElement('a');
+                   link.href = "#";
+                   link.textContent = "Video " + (i+1);
+                   link.dataset.videoId = videoId;
+                   playlistLinks.push(link);
+               }
+           }
+
+           var playlistContainer = document.getElementById('playlist-container');
+           playlistContainer.innerHTML = "";
+           for (var i = 0; i < playlistLinks.length; i++) {
+               playlistContainer.appendChild(playlistLinks[i]);
+               if (i < playlistLinks.length - 1) {
+                   playlistContainer.appendChild(document.createTextNode(" | "));
+               }
+           }
+
+           for (var i = 0; i < playlistLinks.length; i++) {
+               playlistLinks[i].addEventListener('click', function(e) {
+                   e.preventDefault();
+                   var videoId = e.target.dataset.videoId;
+
+                   if (videoId.startsWith("PLAYLIST:")) {
+                       var playlistId = videoId.split("PLAYLIST:")[1];
+                       document.getElementById('video-player').src = "https://www.youtube.com/embed?list=" + playlistId;
+                   } else {
+                       document.getElementById('video-player').src = "https://www.youtube.com/embed/" + videoId;
+                   }
+               });
+           }
+
+           if (videoIds.length > 0) {
+               var firstVideoId = videoIds[0];
+               if (firstVideoId.startsWith("PLAYLIST:")) {
+                   var firstPlaylistId = firstVideoId.split("PLAYLIST:")[1];
+                   document.getElementById('video-player').src = "https://www.youtube.com/embed?list=" + firstPlaylistId;
+               } else {
+                   document.getElementById('video-player').src = "https://www.youtube.com/embed/" + firstVideoId;
+               }
+           }
+       });
+   </script>
+</body>
+</html>
